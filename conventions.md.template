@@ -1,0 +1,42 @@
+---
+type: meta
+tags: [meta, conventions]
+---
+# Workspace Conventions
+
+This page records **evolving project- and user-specific conventions** for this wiki.
+Keep the stable schema and generic workflows in `CLAUDE.md` (or in
+`llm-wiki-instructions/CLAUDE.md` if you import it); keep durable workspace
+preferences here so other agents can pick them up in later sessions.
+
+## Writing conventions
+
+- Use plain technical prose.
+- Avoid AI-style emphasis and unjustified adjectives such as "key", "critical", "central", "core", "important", "major", "genuine", or "novel" unless they add specific meaning.
+- Prefer neutral labels like "research question", "people", "pain points", "techniques", and "references".
+- Scope novelty claims precisely and hedge when needed.
+
+## Terminology conventions
+
+<!-- Project-specific terminology choices. Examples:
+- In proposal prose for X, prefer term Y over Z because …
+- Anchor concept A on the formal definition of B (cite paper).
+-->
+
+## Ingest conventions
+
+- If a PDF, slide deck, or similar source already has an extracted `.txt` file next to it, ingest from the extracted text first. Re-extract only if the source changed or the text is missing/outdated.
+- If both preparation slides and meeting notes exist for the same event, read the slides first and then the meeting notes so the notes are interpreted in context.
+- If a repeatedly used external or shared source folder has no durable ingest tracker yet, create and maintain an `INGESTED.md` file there. Use it to record what was ingested, duplicates, and the source of record.
+
+## Authorship clarifications
+
+<!-- Who writes what. Examples:
+- <Person A> writes <section> from the <institution> side.
+- Do not shorten <abbreviation> without qualification.
+-->
+
+## Maintenance note
+
+- Add durable conventions here when they are likely to matter across sessions or for other agents.
+- Do not put transient meeting content or source-specific facts here; those belong in `sources/`, `projects/`, or `concepts/`.
