@@ -131,7 +131,8 @@ Check for:
 - For PDFs in raw-source directories, note the file path as the source reference.
 - Date format: ISO 8601 (`YYYY-MM-DD`).
 - Be concise in source pages; be thorough in project and concept pages.
-- Use plain technical prose. Avoid AI-style emphasis and superfluous adjectives such as "key", "critical", "central", "core", "important", "major", "genuine", or "novel" unless they add specific, defensible meaning. Prefer neutral labels like "research question", "people", "pain points", "techniques", and "references".
+- Do not use em-dashes (—) or en-dashes (–). Use commas, periods, parentheses, or colons instead. This applies to wiki content, drafted emails, and conversational replies.
+- No AI fluff. Use plain technical prose. Avoid AI-style emphasis and superfluous adjectives such as "key", "critical", "central", "core", "important", "major", "genuine", or "novel" unless they add specific, defensible meaning. Prefer neutral labels like "research question", "people", "pain points", "techniques", and "references". Also avoid hedging filler ("it's worth noting that..."), preamble ("great question..."), and trailing summaries that restate what was just said.
 
 For evolving project- or user-specific conventions, also read `vault/wiki/conventions.md`.
 
