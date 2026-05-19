@@ -180,6 +180,23 @@ Every reference must carry one of these tags:
 
 All claims and references sourced from LLM deep research, meeting notes, or LLM synthesis must eventually be confirmed by a manual literature check. Deep research can hallucinate references or misattribute findings. Before any external submission, every `⚠️ UNVERIFIED` tag must be resolved.
 
+### Bibliographic verification: OpenAlex first, DBLP second
+
+When adding a reference to a wiki page, a deep-research source page, or a proposal `.bib` file, **verify the bibliographic record before recording the citation**. Verification only confirms that the bibliographic details are correct (title, authors, year, venue, DOI); it does not confirm that the paper supports the claim being made. The writer still has to read the paper.
+
+Use this two-step lookup order:
+
+1. **OpenAlex first**. The API is open, returns rich JSON, and covers most journal and conference papers across all fields. Hit one of:
+   - Title-based search: `https://api.openalex.org/works?search=<keywords>&per-page=3`
+   - DOI lookup (most reliable when the DOI is known): `https://api.openalex.org/works/https://doi.org/<DOI>`
+   Parse with `jq` (the dev container has `jq`; Python is not always available). Extract `display_name`, `publication_year`, `(primary_location).source.display_name`, `doi`, `authorships[].author.display_name`, and `biblio.{volume,issue,first_page,last_page}`.
+
+2. **DBLP second**, when OpenAlex returns nothing or returns confusable results. DBLP covers computer-science venues that OpenAlex sometimes misses (workshops, technical bulletins, German `Autom.` journal, ISGT EUROPE workshops). The API is at `https://dblp.org/search/publ/api?q=<query>&format=json&h=5`. Extract from `result.hits.hit[].info`: `title`, `year`, `venue` (or `journal`), `doi`, `pages`, and `authors.author[]`.
+
+If neither service returns a confident result, the reference is typically (a) a book, (b) a technical standard (IEC, ENTSO-E), (c) a vendor specification (DNV OSP-IS), or (d) grey literature (technical reports). In that case, record the reference as **⚠️ UNVERIFIED** with a comment pointing at the publisher page where the writer should locate the bibtex record by hand.
+
+When the wiki/proposal references a reference that has *not* been verified through this path, mark it `⚠️ UNVERIFIED` (per the verification-status conventions above) until the lookup is completed.
+
 ---
 
 ## PDF text extraction
