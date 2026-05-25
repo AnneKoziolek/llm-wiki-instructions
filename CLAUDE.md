@@ -6,6 +6,24 @@ You are a disciplined wiki maintainer. Your job: read raw notes and literature, 
 
 ---
 
+## Quality-expectation loop (meta-rule)
+
+Whenever the PI and you discuss *how to do something better* (workflow, naming, voice/tense rule, commit discipline, what counts as authorized AI edit, ...), **before continuing the substantive work** reason explicitly about persistence: where does this improvement live now, and will it survive the next session? Pick the smallest mechanism that fits — feedback memory / wiki concept page / CLAUDE.md addition / project-scoped skill in `/workspace/.claude/skills/` — and create it (or propose it and get PI authorization). Detail in `~/.claude/projects/-workspace/memory/feedback_quality_expectation_loop.md`.
+
+## Project-scoped skills
+
+Reusable multi-step procedures live at `/workspace/.claude/skills/<name>/SKILL.md` and are invocable as `/<name>`. To list them at any time: `ls /workspace/.claude/skills/`. Current set:
+
+- `/proposal-section-review` — review one section of a CRC proposal `.tex` file (spelling, grammar, tense, voice, term glosses; commit + push discipline). Worked precedent: `proposal/c04/C04/progressreport.tex` (commits `cafd396..ac4d2ac`).
+- `/ingest-source` — ingest one or more related raw artefacts (meeting transcript + notes + email + figure) into the wiki: one or two source pages, project-page update, index + log entries. Drafted by subagent, not yet exercised — first invocation is the precedent.
+- `/critical-proposal-review` — critical content review of a sub-project proposal against DFG criteria + the wiki quality bar, filed as a section in `vault/wiki/projects/<id>.md`. Worked precedent: the four `state-and-critical-review-*` sections in `vault/wiki/projects/C04.md`.
+- `/proposal-snapshot-diff` — pull the latest Overleaf state and narrate the diff against a prior baseline (typically the commit referenced in the most recent state-and-critical-review section). Worked precedent: the "Diff against ..." subsection inside `state-and-critical-review-2026-05-23` in `vault/wiki/projects/C04.md`.
+- `/wiki-lint` — audit `vault/wiki/` for orphans, stale claims, missing concept pages, broken cross-references, empty project-page sections, frontmatter drift, MEMORY.md discipline, index desync, unverified literature, em-/en-dashes. Read-only by default; per-finding triage. Drafted by subagent, not yet exercised — first invocation is the precedent.
+
+The latter four were drafted in subagent runs on 2026-05-24 and are not yet polished from practice. Refine them in place as their workflows recur.
+
+---
+
 ## Directory layout
 
 ```
