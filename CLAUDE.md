@@ -6,6 +6,26 @@ You are a disciplined wiki maintainer. Your job: read raw notes and literature, 
 
 ---
 
+## Quality-expectation loop (meta-rule)
+
+Whenever the PI and you discuss *how to do something better* (workflow, naming, voice/tense rule, commit discipline, what counts as authorized AI edit, ...), **before continuing the substantive work** reason explicitly about persistence: where does this improvement live now, and will it survive the next session? Pick the smallest mechanism that fits — feedback memory / wiki concept page / CLAUDE.md addition / project-scoped skill in `/workspace/.claude/skills/` — and create it (or propose it and get PI authorization). Detail in `~/.claude/projects/-workspace/memory/feedback_quality_expectation_loop.md`.
+
+## Project-scoped skills
+
+Reusable multi-step procedures live at `/workspace/.claude/skills/<name>/SKILL.md` and are invocable as `/<name>`. To list them at any time: `ls /workspace/.claude/skills/`. Current set:
+
+- `/proposal-section-review` — review one section of a CRC proposal `.tex` file (spelling, grammar, tense, voice, term glosses; commit + push discipline). Worked precedent: `proposal/c04/C04/progressreport.tex` (commits `cafd396..ac4d2ac`).
+- `/ingest-source` — ingest one or more related raw artefacts (meeting transcript + notes + email + figure) into the wiki: one or two source pages, project-page update, index + log entries. Drafted by subagent, not yet exercised — first invocation is the precedent.
+- `/critical-proposal-review` — critical content review of a sub-project proposal against DFG criteria + the wiki quality bar, filed as a section in `vault/wiki/projects/<id>.md`. Worked precedent: the four `state-and-critical-review-*` sections in `vault/wiki/projects/C04.md`.
+- `/proposal-snapshot-diff` — pull the latest Overleaf state and narrate the diff against a prior baseline (typically the commit referenced in the most recent state-and-critical-review section). Worked precedent: the "Diff against ..." subsection inside `state-and-critical-review-2026-05-23` in `vault/wiki/projects/C04.md`.
+- `/wiki-lint` — audit `vault/wiki/` for orphans, stale claims, missing concept pages, broken cross-references, empty project-page sections, frontmatter drift, MEMORY.md discipline, index desync, unverified literature, em-/en-dashes. Read-only by default; per-finding triage. Drafted by subagent, not yet exercised — first invocation is the precedent.
+- `/fetch-literature` — resolve a citation (DOI/title/citekey/list) via OpenAlex → DBLP, attempt publisher-direct PDF download in a fixed order (Springer, JOT, VLDB, Elsevier, IEEE, Wiley, SCITEPRESS, SEI, CEUR-WS, Eceasst; skip ACM — always Cloudflare-blocked), run a `%PDF-` + size sanity check, extract with `pdftotext`. For anything not fetched, always emit `[doi](https://doi.org/{DOI}) · [scholar](https://scholar.google.de/scholar?q=...&btnG=)` so the PI can finish from a browser. Worked precedent: the 2026-05-25 [c04-currentstate-extensions](../vault/wiki/c04-currentstate-extensions-2026-05-25.md) deliverable (5 PDFs fetched into `c04/literature/new-2026-05-25/`, 17 needing manual download with clickable links).
+- `/annotate-tex-from-pdf` — transcribe Anne's handwritten PDFExpert review annotations from a rendered proposal PDF into inline `\commentAnne{snippet}{note}` / `\todoAnne{note}` markers in the proposal `.tex` source. Combines the visual-rasterisation extraction pattern (poppler-utils only, two-pass DPI) with a green-underline + green-todonote LaTeX setup added to `projectspecific.tex`. Worked precedent: the 2026-05-24 PDF annotations transcribed at [[sources/2026-05-24-anne-pdf-annotations-c04]].
+
+The middle five (`ingest-source`, `critical-proposal-review`, `proposal-snapshot-diff`, `wiki-lint`, `annotate-tex-from-pdf`) were drafted in subagent runs on 2026-05-24 and 2026-05-25 and are not yet polished from practice. `fetch-literature` was drafted on 2026-05-25 from the worked precedent. Refine all in place as their workflows recur.
+
+---
+
 ## Directory layout
 
 ```
@@ -139,7 +159,8 @@ Check for:
 - For PDFs in raw-source directories, note the file path as the source reference.
 - Date format: ISO 8601 (`YYYY-MM-DD`).
 - Be concise in source pages; be thorough in project and concept pages.
-- Use plain technical prose. Avoid AI-style emphasis and superfluous adjectives such as "key", "critical", "central", "core", "important", "major", "genuine", or "novel" unless they add specific, defensible meaning. Prefer neutral labels like "research question", "people", "pain points", "techniques", and "references".
+- Do not use em-dashes (—) or en-dashes (–). Use commas, periods, parentheses, or colons instead. This applies to wiki content, drafted emails, and conversational replies.
+- No AI fluff. Use plain technical prose. Avoid AI-style emphasis and superfluous adjectives such as "key", "critical", "central", "core", "important", "major", "genuine", or "novel" unless they add specific, defensible meaning. Prefer neutral labels like "research question", "people", "pain points", "techniques", and "references". Also avoid hedging filler ("it's worth noting that..."), preamble ("great question..."), and trailing summaries that restate what was just said.
 
 For evolving project- or user-specific conventions, also read `vault/wiki/conventions.md`.
 
@@ -186,6 +207,23 @@ Every reference must carry one of these tags:
 - **⚠️ DETAILS INCOMPLETE** — key verified but bibliographic details (year, venue, exact title) need completion
 
 All claims and references sourced from LLM deep research, meeting notes, or LLM synthesis must eventually be confirmed by a manual literature check. Deep research can hallucinate references or misattribute findings. Before any external submission, every `⚠️ UNVERIFIED` tag must be resolved.
+
+### Bibliographic verification: OpenAlex first, DBLP second
+
+When adding a reference to a wiki page, a deep-research source page, or a proposal `.bib` file, **verify the bibliographic record before recording the citation**. Verification only confirms that the bibliographic details are correct (title, authors, year, venue, DOI); it does not confirm that the paper supports the claim being made. The writer still has to read the paper.
+
+Use this two-step lookup order:
+
+1. **OpenAlex first**. The API is open, returns rich JSON, and covers most journal and conference papers across all fields. Hit one of:
+   - Title-based search: `https://api.openalex.org/works?search=<keywords>&per-page=3`
+   - DOI lookup (most reliable when the DOI is known): `https://api.openalex.org/works/https://doi.org/<DOI>`
+   Parse with `jq` (the dev container has `jq`; Python is not always available). Extract `display_name`, `publication_year`, `(primary_location).source.display_name`, `doi`, `authorships[].author.display_name`, and `biblio.{volume,issue,first_page,last_page}`.
+
+2. **DBLP second**, when OpenAlex returns nothing or returns confusable results. DBLP covers computer-science venues that OpenAlex sometimes misses (workshops, technical bulletins, German `Autom.` journal, ISGT EUROPE workshops). The API is at `https://dblp.org/search/publ/api?q=<query>&format=json&h=5`. Extract from `result.hits.hit[].info`: `title`, `year`, `venue` (or `journal`), `doi`, `pages`, and `authors.author[]`.
+
+If neither service returns a confident result, the reference is typically (a) a book, (b) a technical standard (IEC, ENTSO-E), (c) a vendor specification (DNV OSP-IS), or (d) grey literature (technical reports). In that case, record the reference as **⚠️ UNVERIFIED** with a comment pointing at the publisher page where the writer should locate the bibtex record by hand.
+
+When the wiki/proposal references a reference that has *not* been verified through this path, mark it `⚠️ UNVERIFIED` (per the verification-status conventions above) until the lookup is completed.
 
 ---
 
