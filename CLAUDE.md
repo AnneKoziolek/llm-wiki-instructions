@@ -122,6 +122,14 @@ Check for:
 
 ---
 
+## Source discipline
+
+**Source pages are dated snapshots.** A `sources/` page records what its source said at the time of ingestion. Do not revise it later to reflect newer knowledge — the living synthesis (`projects/`, `concepts/`, `overview.md`) is where contradictions are reconciled and the current understanding lives. When a later source supersedes it, record that in the project/concept page, or add a dated annotation to the source page; do not rewrite the snapshot. Editing a source page for fidelity (typos, broken links, citation fixes, cross-links) is fine.
+
+**No claims about an artifact you have not opened.** Do not describe, summarize, paraphrase, "mirror", reproduce, or build on the content of any artifact — paper, slide, document, attachment, image, spreadsheet, email, link, dataset — that you have not opened/read in this session. A filename, path, reference, or someone else's description is not the content, even when a task says to "mirror" or "be consistent with" it. Instead: state plainly that you do not have it, ask the user to provide it, and offer a path that does not require it (e.g., a standalone draft from known facts, clearly marked as not derived from the unseen artifact). If you must reference it unopened, attribute the statement to the secondary source ("per the email, the slide is titled X") and mark it unverified/unseen. Bibliographic verification of a paper (DOI / venue / authors) does not count as reading it.
+
+---
+
 ## Conventions
 
 - All wiki pages are in English.
