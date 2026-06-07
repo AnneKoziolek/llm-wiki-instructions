@@ -31,6 +31,32 @@ knowledge base, etc.):
    citation conventions, quality bar, PDF extraction) should stay as-is.
 4. Create `vault/wiki/conventions.md` in the new project from the template
    here — it will accumulate project-specific conventions as you work.
+5. (Recommended) Install the submodule-safety pre-commit hook into
+   the parent repo: `bash llm-wiki-instructions/install-hooks.sh`.
+   This is per-clone (the parent repo's `.git/hooks/` is not
+   versioned), so every contributor and every CI runner that
+   commits back has to run it once. See "Git hygiene (submodules)"
+   in `CLAUDE.md` for what the hook catches.
+
+## Updating an existing wiki to a newer `llm-wiki-instructions`
+
+When this submodule gains a new commit (e.g. the hook changes, or
+the schema gets a new section), each wiki that consumes it needs to
+be bumped. From the parent repo's root:
+
+```bash
+git -C llm-wiki-instructions pull
+git add llm-wiki-instructions
+git commit -m "Bump llm-wiki-instructions"
+bash llm-wiki-instructions/install-hooks.sh   # re-run per clone
+```
+
+The `install-hooks.sh` line is idempotent: if the symlink is
+already in place and pointing at the same `hooks/` directory,
+it prints `[ok]` and exits 0. If the hook is absent (fresh clone,
+new dev container), it installs it. If a different non-symlink
+hook is in the way, the script skips that name and tells you to
+re-run with `--force` (which backs up the existing file).
 
 ## Importing into CLAUDE.md
 

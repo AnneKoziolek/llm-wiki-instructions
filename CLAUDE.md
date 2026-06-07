@@ -258,6 +258,25 @@ Run this from the outer repo root. It initialises any submodule that is not yet 
 
 The `git pull` you run in the outer repo does **not** update submodules by default; do not assume it does. Either configure `git config submodule.recurse true` once, or invoke the explicit command above.
 
+### One-time per clone: install the pre-commit hook
+
+`.git/hooks/` is not versioned, so the hook must be installed once per clone (fresh contributor clone, new dev container, new CI runner that commits back). Run from the outer repo root:
+
+```bash
+bash llm-wiki-instructions/install-hooks.sh
+```
+
+This creates a relative-path symlink at `.git/hooks/pre-commit` pointing into the submodule. The script is idempotent (re-running is a no-op if the symlink is already correct) and refuses to clobber an existing non-symlink hook unless `--force` (which also backs up the original).
+
+An agent finding `.git/hooks/pre-commit` absent or pointing somewhere else should install it before producing any outer-repo commits. Quick check:
+
+```bash
+ls -l .git/hooks/pre-commit 2>/dev/null | grep -F 'llm-wiki-instructions/hooks/pre-commit' \
+  || bash llm-wiki-instructions/install-hooks.sh
+```
+
+When the `llm-wiki-instructions` submodule pointer is bumped past a commit that changes anything under `hooks/`, re-run the install command in each clone (the symlink target itself is stable, but re-running surfaces drift to the next maintainer).
+
 ### Before committing in the outer repo, audit submodule pointer changes
 
 Whenever `git status` in the outer repo lists a submodule under "Changes to be committed" or "Changes not staged", verify the change is intentional **before** running `git add` / `git commit`:
