@@ -15,6 +15,8 @@ knowledge base, etc.):
 | `HOW-TO-USE.md` | Human-facing quick reference: how to talk to the agent, common commands, where to look. |
 | `conventions.md` | Project-specific conventions that evolve over time (terminology, authorship, ingest preferences). Lives **inside** the wiki vault, not here — this folder ships only an empty template. |
 | `karpathy-llm-wiki.md` | Reference: the pattern this is based on. |
+| `hooks/pre-commit` | Optional git pre-commit hook for the **parent** repo: warns when a commit changes a submodule pointer in a way that looks unintentional (silent rollback, uninitialised submodule, staged SHA != submodule's local `HEAD`). See "Git hygiene (submodules)" in `CLAUDE.md`. |
+| `install-hooks.sh` | Installer that symlinks each file in `hooks/` into the parent repo's `.git/hooks/`. Run once per clone, from the parent repo root: `bash llm-wiki-instructions/install-hooks.sh`. |
 
 ## How to use it in a new project
 

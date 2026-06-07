@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# pre-commit hook: warn on unintended submodule pointer changes.
+#
+# Catches the common failure mode where an outer-repo commit silently rolls
+# a submodule pointer backwards (or to a stale SHA) because the submodule
+# directory in the working tree was not at the SHA the committer expected
+# (e.g. uninitialised, never-pulled, stuck on an old branch).
+#
+# Three checks per submodule pointer change in the staged diff:
+#   1. The staged pointer must match the submodule's local HEAD. If not,
+#      git is about to record a SHA that no one looked at.
+#   2. The staged pointer must not be an ancestor of the previous pointer
+#      (i.e. no silent rollback).
+#   3. The submodule must be initialised. An uninitialised submodule whose
+#      pointer is changing is almost always an accident.
+#
+# Any failed check triggers an interactive y/N prompt. Pressing Enter aborts.
+# To bypass entirely: git commit --no-verify
+#
+# Origin: https://github.com/AnneKoziolek/claude-mcse-rules
+#         hooks/pre-commit
+
+set -eu
+
+# Collect staged changes; bail out fast if there are none.
+# --no-abbrev keeps full 40-char SHAs so comparisons against `git rev-parse
+# HEAD` output line up exactly.
+changes=$(git diff --cached --raw --no-abbrev)
+if [ -z "$changes" ]; then
+    exit 0
+fi
+
+# Filter for submodule (gitlink, mode 160000) entries. Either side may be
+# 160000 (added / modified / deleted submodule).
+submodule_lines=$(printf '%s\n' "$changes" | awk '$1 == ":160000" || $2 == "160000"')
+if [ -z "$submodule_lines" ]; then
+    exit 0
+fi
+
+problems=0
+report=""
+
+while IFS= read -r line; do
+    # Format: ":mode_old mode_new sha_old sha_new STATUS\tPATH"
+    sha_old=$(printf '%s\n' "$line" | awk '{print $3}')
+    sha_new=$(printf '%s\n' "$line" | awk '{print $4}')
+    status=$(printf '%s\n' "$line" | awk '{print $5}')
+    path=$(printf '%s\n' "$line" | cut -f2-)
+
+    # Skip outright deletions: removing a submodule is rare and explicit.
+    if [ "$status" = "D" ]; then
+        continue
+    fi
+
+    initialized=false
+    actual=""
+    if [ -e "$path/.git" ]; then
+        if actual=$(git -C "$path" rev-parse HEAD 2>/dev/null); then
+            initialized=true
+        fi
+    fi
+
+    warns=""
+
+    # Check 3: uninitialised submodule whose pointer is changing.
+    if ! $initialized; then
+        warns="$warns
+      - submodule is NOT initialised; cannot verify the staged pointer."
+        warns="$warns
+        run: git submodule update --init --recursive '$path'"
+    else
+        # Check 1: staged pointer != local HEAD.
+        if [ "$actual" != "$sha_new" ]; then
+            warns="$warns
+      - staged pointer does NOT match the submodule's local HEAD."
+            warns="$warns
+        local HEAD: $actual"
+            warns="$warns
+        to stage the local HEAD instead:        git add '$path'"
+            warns="$warns
+        to discard the staged pointer instead:  git submodule update '$path'"
+        fi
+
+        # Check 2: rollback (new is ancestor of old).
+        if [ "$status" = "M" ] && [ "$sha_new" != "$sha_old" ]; then
+            if git -C "$path" rev-parse --verify "$sha_old" >/dev/null 2>&1 \
+               && git -C "$path" rev-parse --verify "$sha_new" >/dev/null 2>&1; then
+                if git -C "$path" merge-base --is-ancestor "$sha_new" "$sha_old" >/dev/null 2>&1; then
+                    warns="$warns
+      - pointer goes BACKWARDS (new is an ancestor of old)."
+                fi
+            fi
+        fi
+    fi
+
+    if [ -n "$warns" ]; then
+        report="$report
+
+    $path
+      staged: $sha_old -> $sha_new$warns"
+        problems=$((problems + 1))
+    fi
+done <<EOF
+$submodule_lines
+EOF
+
+if [ "$problems" -eq 0 ]; then
+    exit 0
+fi
+
+printf '\n=== pre-commit: submodule pointer concerns ===%s\n\n' "$report"
+printf 'Continue with commit anyway? [y/N] '
+
+# git redirects stdin to /dev/null for hooks; read from the terminal directly.
+if [ -r /dev/tty ]; then
+    if read -r answer < /dev/tty; then
+        case "$answer" in
+            y|Y|yes|YES) printf 'Proceeding.\n'; exit 0 ;;
+        esac
+    fi
+fi
+
+printf 'Commit aborted. Use `git commit --no-verify` to bypass this check.\n'
+exit 1
