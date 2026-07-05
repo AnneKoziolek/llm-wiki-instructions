@@ -246,6 +246,10 @@ LLM wikis built on this schema typically pull in several git submodules: this in
 1. **Working with stale submodule contents** because a submodule was never initialised on the current machine (or was initialised once and has drifted), so files read inside it are old or absent.
 2. **Silently committing a rollback** of a submodule pointer in the outer repo, because the working tree had the submodule at an older SHA than the outer commit recorded. The committer notices weeks later when a colleague's machine produces a merge conflict on the gitlink.
 
+### Do not commit from Claude Cowork (sandboxed environment)
+
+Claude Cowork works on this repo from a sandbox where history-writing git is unreliable: committing and submodule operations fail there (observed: submodule `index.lock` "Operation not permitted" errors under `.git/modules/`, and partial or refused writes). From Cowork, do not run `git commit`, `git add`, `git rm`, `git mv`, or any command that writes history or the index. Create and edit files only, and leave staging, committing, and the submodule-pointer audit below to the user on a normal checkout (Claude Code CLI, VS Code, or a terminal). Read-only inspection (`git status`, `git diff`, `git diff --submodule=log`) is fine and is the right way for a Cowork session to report what it changed. This does not relax the audit rules below; it defers them to whoever performs the commit.
+
 ### At session start, sync submodules
 
 The first non-trivial action in a new session, and again whenever a session resumes after a meaningful gap (overnight, after a long pause, after switching branches), is:
