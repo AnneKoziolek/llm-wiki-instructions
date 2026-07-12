@@ -181,6 +181,8 @@ This wiki supports research work that will be reviewed by domain experts. Treat 
 
 ### Citation keys (bibtex-style)
 
+> **These keys are for the wiki only.** If the project has a reference manager (Zotero, Mendeley) that generates the keys used in the actual `.bib` and `\cite`s, **its convention wins for anything that leaves the wiki**. The wiki keys are an internal index and need not match. Check the project's own rules before emitting a BibTeX block or writing a `\cite`; carrying the wiki convention into a bibliography produces keys that do not resolve.
+
 Use **authorYEARword** citation keys throughout the wiki, following Google Scholar conventions:
 
 - Format: `[firstAuthorLastName][YEAR][first-meaningful-word-of-title]`
