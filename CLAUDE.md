@@ -142,6 +142,33 @@ Check for:
 
 ---
 
+## Durable content, not a process trail
+
+**A wiki page records the current state of knowledge and the reasoning that supports it. It is not a record of how that knowledge was arrived at.** Write pages the way you would write good meeting minutes: not everything that was said, but the claims, the arguments, the decisions, and what is still open.
+
+`log.md` is where chronology belongs. That is what it is for. Keep it out of `concepts/`, `projects/` and `sources/`.
+
+**Do not write, in a wiki page:**
+
+- Session narration: *"Added 2026-07-14"*, *"Resolved in this pass"*, *"the PI asked on Tuesday"*, *"a subagent found"*.
+- The page's own revision history: *"an earlier version of this page said X; that was wrong"*. Just say the right thing. If the correction itself is instructive (a tempting argument that does not survive scrutiny), keep **the argument and why it fails**, not the fact that the page once got it wrong.
+- Discovery order: *"first we thought X, then we found Y"*. State Y, and state X only if a reader would otherwise re-propose it.
+- Numbered review passes, per-session subsections, play-by-play of who said what when.
+
+**Do write:**
+
+- Definitions, claims, and the evidence for them.
+- **Positions attributed to people** (*"Reussner's position is containment; Koziolek's is three siblings"*). Who holds a view is durable and often load-bearing. *When they said it* usually is not.
+- Decisions **with their rationale and their scope** (what was decided, why, what it does not cover, what it depends on).
+- Open questions, and what would settle them.
+- Dates only where the date is itself content: a deadline, a publication year, a dated snapshot in `sources/`, a decision whose validity is time-bounded.
+
+**Source pages are the one partial exception.** A `sources/` page is a dated snapshot of one artefact, so its `date:` and its *(Source: German)*-style provenance stay. But even there, record the **positions and arguments**, not a message-by-message replay of the thread. A transcript is not minutes.
+
+**Test before you write a sentence:** *would this still be worth reading by someone who was not here, six months from now?* If it only makes sense as a report of what happened in a session, it belongs in `log.md` or nowhere.
+
+**When revising a page, prune.** A page that has accumulated a process trail should be rewritten to keep only durable content, dropping the narration around how each fact was found. No claim, citation or open question may be lost in the process; only the story of how it got there.
+
 ## Source discipline
 
 **Source pages are dated snapshots.** A `sources/` page records what its source said at the time of ingestion. Do not revise it later to reflect newer knowledge — the living synthesis (`projects/`, `concepts/`, `overview.md`) is where contradictions are reconciled and the current understanding lives. When a later source supersedes it, record that in the project/concept page, or add a dated annotation to the source page; do not rewrite the snapshot. Editing a source page for fidelity (typos, broken links, citation fixes, cross-links) is fine.
