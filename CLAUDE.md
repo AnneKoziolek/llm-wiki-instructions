@@ -19,13 +19,15 @@ Reusable multi-step procedures live at `/workspace/.claude/skills/<name>/SKILL.m
 - `/critical-proposal-review` — critical content review of a sub-project proposal against DFG criteria + the wiki quality bar, filed as a section in `vault/wiki/projects/<id>.md`. Worked precedent: the four `state-and-critical-review-*` sections in `vault/wiki/projects/C04.md`.
 - `/proposal-snapshot-diff` — pull the latest Overleaf state and narrate the diff against a prior baseline (typically the commit referenced in the most recent state-and-critical-review section). Worked precedent: the "Diff against ..." subsection inside `state-and-critical-review-2026-05-23` in `vault/wiki/projects/C04.md`.
 - `/wiki-lint` — audit `vault/wiki/` for orphans, stale claims, missing concept pages, broken cross-references, empty project-page sections, frontmatter drift, MEMORY.md discipline, index desync, unverified literature, em-/en-dashes. Read-only by default; per-finding triage. Drafted by subagent, not yet exercised — first invocation is the precedent.
+- `/paper-structure` — draft or diagnose the macro-structure of a paper, thesis or abstract against the SDQ writing guide: the pyramid principle, the five-point abstract, the five-point introduction ending in an explicit contribution paragraph, related-work positioning, an assumptions-and-limitations section, the three-point conclusion, plus heading and outline rules. Sentence-level style is out of scope, since the always-on `write-scientific-prose` rule covers it. Carries the distilled guide at `paper-structure/reference/sdq-writing-guide.md` and a paste-able prompt block for non-Claude-Code tools. **Project-independent.**
+- `/paper-review` — write a structured review in the SDQ review shape (summary, outline of the argumentation, positives first, then contribution, related work, presentation, validation, minor comments kept separate), with the SDQ evidence-based protocol for AI-assisted review: novelty literature search, reference fact-checking, evidence alignment per claim, reproducibility check, questions for authors, and an explicit statement of the review's own uncertainty. Opens with a confidentiality gate, because a paper received as a program-committee or journal reviewer must not enter an AI assistant at all (`handle-ai-in-research`). **Project-independent.**
 - `/fetch-literature` — resolve a citation (DOI/title/citekey/list) via OpenAlex → DBLP, attempt publisher-direct PDF download in a fixed order (Springer, JOT, VLDB, Elsevier, IEEE, Wiley, SCITEPRESS, SEI, CEUR-WS, Eceasst; skip ACM — always Cloudflare-blocked), run a `%PDF-` + size sanity check, extract with `pdftotext`. For anything not fetched, always emit `[doi](https://doi.org/{DOI}) · [scholar](https://scholar.google.de/scholar?q=...&btnG=)` so the PI can finish from a browser. Worked precedent: the 2026-05-25 [c04-currentstate-extensions](../vault/wiki/c04-currentstate-extensions-2026-05-25.md) deliverable (5 PDFs fetched into `c04/literature/new-2026-05-25/`, 17 needing manual download with clickable links).
 - `/extract-pdf-annotations` and `/annotate-tex-from-annotations` — a two-step pipeline for getting a reviewed PDF into the proposal source. **Extraction** handles every modality in one place: typed PDF comments (sticky notes, highlights, free-text boxes, `/IRT` reply threads), reviewer edits (strikeout, underline, caret/insert), and handwritten PDFExpert ink. It reads `/Annots` losslessly with a bundled Perl script (perl + `Compress::Zlib` only; `pdfannots` / `qpdf` / `mutool` / `python3` are absent from the container) and recovers each annotation's **anchor**, the verbatim rendered sentence it covers, by mapping `/QuadPoints` through `pdftotext -bbox-layout`; ink instead goes through two-pass DPI rasterisation. Output is a `vault/wiki/sources/` page. **Insertion** consumes one or more of those pages, plus feedback that never was a PDF (`.md`, `.docx`, email), and places `\commentAnne{}{}` / `\todoAnne{}` / `\todo{REVIEWER: ...\\ \textbf{>> reply}}` markers in the `.tex`, merging several reviewers in a single pass.
   The seam is deliberate: an anchor can only be recovered while the PDF is at hand, whereas resolving that anchor to a line in the `.tex` needs the `.tex` (which has usually moved on since the PDF was rendered) and never the PDF. Splitting is also what lets a reviewer who sent no PDF at all take part in the same insertion pass. Worked precedents: `proposal/c05` commit `72f749b` (Düser's PDF + Sax's markdown + Kemal's partial transcription, merged in one pass), and the 2026-07-29 reuse of [[sources/2026-07-23-pretschner-pdf-annotations-c04]] by a later session without re-extracting.
 
-`ingest-source` and `wiki-lint` were drafted in subagent runs on 2026-05-24 and 2026-05-25 and are still unexercised; their first invocation is the precedent. The rest carry worked precedents and should be refined in place as their workflows recur.
+`ingest-source` and `wiki-lint` were drafted in subagent runs on 2026-05-24 and 2026-05-25 and are still unexercised; their first invocation is the precedent. `paper-structure` and `paper-review` arrived with the skills-submodule bump of 2026-09-08 and are likewise unexercised here. The rest carry worked precedents and should be refined in place as their workflows recur.
 
-**This list is the canonical skill catalogue.** It is the one that matters, because this file is `@`-imported by the project `CLAUDE.md` and so sits in every session's context, which is what makes an agent aware a skill exists at all. `.claude/skills/README.md` carries a one-line-per-skill copy for the standalone repo; keep the two in step. Do not add a third copy under `vault/wiki/` — tooling is not research knowledge, and three copies drift. In practice the `description:` frontmatter of each `SKILL.md` does the real work: Claude Code matches against it, so a task described in the PI's own words picks up the right skill without a slash command. `ls /workspace/.claude/skills/` lists what exists; `/<name>` invokes one explicitly and accepts an argument (`/extract-pdf-annotations c05/review/foo.pdf`).
+**This list is the canonical skill catalogue.** Its drift is not cosmetic: `paper-structure` and `paper-review` sat in `.claude/skills/` for a day listed only in that repo's own `README.md`, which no session reads, so no agent knew they existed. It is the one that matters, because this file is `@`-imported by the project `CLAUDE.md` and so sits in every session's context, which is what makes an agent aware a skill exists at all. `.claude/skills/README.md` carries a one-line-per-skill copy for the standalone repo; keep the two in step. Do not add a third copy under `vault/wiki/` — tooling is not research knowledge, and three copies drift. In practice the `description:` frontmatter of each `SKILL.md` does the real work: Claude Code matches against it, so a task described in the PI's own words picks up the right skill without a slash command. `ls /workspace/.claude/skills/` lists what exists; `/<name>` invokes one explicitly and accepts an argument (`/extract-pdf-annotations c05/review/foo.pdf`).
 
 ---
 
@@ -40,9 +42,16 @@ vault/wiki/
 │   └── *.md
 ├── concepts/           ← Scientific/technical concepts
 │   └── *.md
+├── papers/             ← One page per own paper being written (optional; see below)
+│   └── *.md
 └── sources/            ← One page per ingested source (meeting note, paper)
     └── *.md
 ```
+
+`papers/` exists only in a wiki whose project also writes its own papers. Do not
+confuse it with `sources/`: a `sources/` page is a dated snapshot of something
+somebody else wrote and we read, while a `papers/` page is the living state of
+something we are writing.
 
 Raw sources (read-only) — listed in the project's own `CLAUDE.md`.
 
@@ -86,6 +95,57 @@ tags: [concept]
 ## References
 ## Sources
 ```
+
+### Paper page (`papers/<slug>.md`)
+
+For a paper the project is writing itself. Slug `<year>-<venue>-<topic>`.
+
+```markdown
+---
+type: paper
+tags: [paper]
+venue: <venue + track>
+deadline: YYYY-MM-DD
+status: drafting | internal-review | submitted | under-review | revision-in-progress | camera-ready | published
+---
+# <slug>: <working title>
+
+## Status
+<!-- Cold-start block: phase, what to read first in reading order, open decisions. -->
+## Claim
+<!-- One sentence: what the paper asserts that was not known before. -->
+## Contributions
+<!-- The numbered list the introduction's contribution paragraph has to match. -->
+## Structure state
+## Related work coverage
+## Evidence map
+<!-- Each claimed number, and the artefact it comes from. -->
+## Open questions
+## Review rounds
+## People
+## Related concepts
+## References
+## Sources
+<!-- What has actually been read of the manuscript, and what has not. -->
+```
+
+Two sections do work the other page types do not, and both exist because a paper
+is a *deliverable* rather than a body of knowledge:
+
+- **`## Evidence map`** ties every number the paper claims to the artefact it
+  came from (a test assertion, a results CSV, a measurement log, a table in the
+  submitted PDF). A number in a planning note or an earlier draft is not a
+  result. This is the page's defence against a fluent sentence about a
+  measurement nobody made, and it matters most where the agent is allowed to
+  generate prose.
+- **`## Sources`** records how far the manuscript has actually been read, section
+  by section if need be. A paper page is written while most of the paper is
+  still unread, so the read scope has to be explicit or the page's silence gets
+  mistaken for coverage.
+
+The cold-start content (status, what to read first, open decisions) belongs here
+and not in the project's `CLAUDE.md`, where it goes stale unread. Chronology
+belongs in `log.md`, per the durable-content rule.
 
 ### Source page (`sources/<slug>.md`)
 ```markdown
