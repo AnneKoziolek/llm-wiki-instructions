@@ -8,7 +8,9 @@ You are a disciplined wiki maintainer. Your job: read raw notes and literature, 
 
 ## Quality-expectation loop (meta-rule)
 
-Whenever the PI and you discuss *how to do something better* (workflow, naming, voice/tense rule, commit discipline, what counts as authorized AI edit, ...), **before continuing the substantive work** reason explicitly about persistence: where does this improvement live now, and will it survive the next session? Pick the smallest mechanism that fits — feedback memory / wiki concept page / CLAUDE.md addition / project-scoped skill in `/workspace/.claude/skills/` — and create it (or propose it and get PI authorization). Detail in `~/.claude/projects/-workspace/memory/feedback_quality_expectation_loop.md`.
+Whenever the PI and you discuss *how to do something better* (workflow, naming, voice/tense rule, commit discipline, what counts as authorized AI edit, ...), **before continuing the substantive work** reason explicitly about persistence: where does this improvement live now, and will it survive the next session? Pick the smallest mechanism that fits (feedback memory / wiki concept page / CLAUDE.md addition / project-scoped skill in `/workspace/.claude/skills/`) and create it, or propose it and get PI authorization. Detail in `/workspace/.claude/memory/shared/feedback-quality-expectation-loop.md`.
+
+That loop is reactive: it fires when the two of you *discuss* doing something better. `/skill-evolve` is its proactive counterpart, for the corrections that were made and then forgotten because nobody stopped to name them.
 
 ## Project-scoped skills
 
@@ -26,7 +28,9 @@ Reusable multi-step procedures live at `/workspace/.claude/skills/<name>/SKILL.m
 - `/extract-pdf-annotations` and `/annotate-tex-from-annotations` — a two-step pipeline for getting a reviewed PDF into the proposal source. **Extraction** handles every modality in one place: typed PDF comments (sticky notes, highlights, free-text boxes, `/IRT` reply threads), reviewer edits (strikeout, underline, caret/insert), and handwritten PDFExpert ink. It reads `/Annots` losslessly with a bundled Perl script (perl + `Compress::Zlib` only; `pdfannots` / `qpdf` / `mutool` / `python3` are absent from the container) and recovers each annotation's **anchor**, the verbatim rendered sentence it covers, by mapping `/QuadPoints` through `pdftotext -bbox-layout`; ink instead goes through two-pass DPI rasterisation. Output is a `vault/wiki/sources/` page. **Insertion** consumes one or more of those pages, plus feedback that never was a PDF (`.md`, `.docx`, email), and places `\commentAnne{}{}` / `\todoAnne{}` / `\todo{REVIEWER: ...\\ \textbf{>> reply}}` markers in the `.tex`, merging several reviewers in a single pass.
   The seam is deliberate: an anchor can only be recovered while the PDF is at hand, whereas resolving that anchor to a line in the `.tex` needs the `.tex` (which has usually moved on since the PDF was rendered) and never the PDF. Splitting is also what lets a reviewer who sent no PDF at all take part in the same insertion pass. Worked precedents: `proposal/c05` commit `72f749b` (Düser's PDF + Sax's markdown + Kemal's partial transcription, merged in one pass), and the 2026-07-29 reuse of [[sources/2026-07-23-pretschner-pdf-annotations-c04]] by a later session without re-extracting.
 
-`ingest-source` and `wiki-lint` were drafted in subagent runs on 2026-05-24 and 2026-05-25 and are still unexercised; their first invocation is the precedent. `paper-structure` and `paper-review` arrived with the skills-submodule bump of 2026-09-08 and are likewise unexercised here. The rest carry worked precedents and should be refined in place as their workflows recur.
+- `/skill-evolve` — the periodic maintenance pass over `/workspace/.claude/memory/` and the skill catalogue itself. Reads recent session transcripts, diagnoses the root cause of corrections the PI had to make, appends evidence to existing memories rather than rewriting them, and proposes **at most one** atomic skill change per run. The PI is the gate (there is no validation score, unlike the method it is ported from), and the outcome is written to `skill-impact.md` either way, with the full text of anything rejected so that no later run re-proposes it. The proactive counterpart to the quality-expectation loop above, which only fires when somebody notices. Created 2026-09-19, unexercised; first invocation is the precedent. **Project-independent.**
+
+`ingest-source` and `wiki-lint` were drafted in subagent runs on 2026-05-24 and 2026-05-25 and are still unexercised; their first invocation is the precedent. `paper-structure` and `paper-review` arrived with the skills-submodule bump of 2026-09-08 and are likewise unexercised here, as is `skill-evolve` (2026-09-19). The rest carry worked precedents and should be refined in place as their workflows recur.
 
 **This list is the canonical skill catalogue.** Its drift is not cosmetic: `paper-structure` and `paper-review` sat in `.claude/skills/` for a day listed only in that repo's own `README.md`, which no session reads, so no agent knew they existed. It is the one that matters, because this file is `@`-imported by the project `CLAUDE.md` and so sits in every session's context, which is what makes an agent aware a skill exists at all. `.claude/skills/README.md` carries a one-line-per-skill copy for the standalone repo; keep the two in step. Do not add a third copy under `vault/wiki/` — tooling is not research knowledge, and three copies drift. In practice the `description:` frontmatter of each `SKILL.md` does the real work: Claude Code matches against it, so a task described in the PI's own words picks up the right skill without a slash command. `ls /workspace/.claude/skills/` lists what exists; `/<name>` invokes one explicitly and accepts an argument (`/extract-pdf-annotations c05/review/foo.pdf`).
 
@@ -232,6 +236,51 @@ Check for:
 **Test before you write a sentence:** *would this still be worth reading by someone who was not here, six months from now?* If it only makes sense as a report of what happened in a session, it belongs in `log.md` or nowhere.
 
 **When revising a page, prune.** A page that has accumulated a process trail should be rewritten to keep only durable content, dropping the narration around how each fact was found. No claim, citation or open question may be lost in the process; only the story of how it got there.
+
+## Operational knowledge goes in the memory store, not in the wiki
+
+`vault/wiki/` holds research knowledge. **How an agent should work on it**, and
+the corrections it has needed, go to `/workspace/.claude/memory/`: one file per
+fact, indexed by `MEMORY.md`, with `skill-impact.md` recording every skill change
+and every proposal the PI refused. That directory's `README.md` carries the
+format; `shared/reference-wikiskill.md` carries the argument and the source.
+
+The split is load-bearing, not tidy-mindedness. Tooling is not research
+knowledge, and three copies of anything drift. It also has an empirical argument
+behind it: WikiSkill (arXiv:2608.27454v1) ablated exactly this and found that an
+agent carrying the operational store while *doing the task* performed worse than
+one carrying only its skills, because it then solves from the store instead of
+from the skill and the trace stops showing what the skill fails to cover. So the
+memory store is reached through `MEMORY.md` and through skills, and is never
+loaded wholesale into a working session. `/skill-evolve` is the separate pass
+that maintains it.
+
+Four format rules come from the same source and apply to any page whose job is
+to be found and acted on.
+
+**An index line is the product; the page is only read if the line earns it.**
+WikiSkill's own maintainer prompt calls the index "the MOST IMPORTANT part of the
+wiki" and mandates `[name](path): PROBLEM + ROOT CAUSE + FIX in one or two
+sentences`. In `MEMORY.md` that form is binding, soft cap 350 characters. In
+`vault/wiki/index.md` the entries catalogue research pages rather than failure
+modes, so the weaker version applies: a line has to let a reader judge relevance
+without opening the page, which a restated title does not. The same reasoning
+already governs the `description:` frontmatter of a `SKILL.md`, which is what
+Claude Code matches against.
+
+**A page whose job is one pattern stays at 10 to 30 lines, "not essays".** The
+skills WikiSkill measured came out at 45 to 143 markdown lines and its pattern
+pages at 18 to 48. A 200-line skill carrying a 60-line worked precedent is two
+artefacts: the procedure belongs in the skill, the observed failure modes and the
+PI's rulings belong in the memory store. Split it when you next touch it.
+
+**Patch; do not rewrite; never duplicate.** A recurrence is appended as evidence
+to the existing page, so that a rule observed five times is visibly stronger than
+one observed once. Creating a second page on the same failure mode destroys that
+signal, and it is the main thing to check before creating anything.
+
+**Document what worked, not only what broke.** A store of failures alone cannot
+tell you which existing guidance is already doing its job and must be left alone.
 
 ## Source discipline
 
