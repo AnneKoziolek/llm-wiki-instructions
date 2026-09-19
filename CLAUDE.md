@@ -316,6 +316,19 @@ On finding a dropped paper:
 
 Do not ask the PI where to put it or what to call it. She dropped it precisely so she would not have to think about that.
 
+### Version the derived artefact, not an original that is already persisted elsewhere.
+
+**If an artefact is durably held outside this repository, do not commit it. Commit what the repository adds to it: the extraction, the source page, the synthesis.**
+
+Apply the test once, before committing an ingested original, rather than deciding it again per file type:
+
+- **Held elsewhere, so not versioned:** paper PDFs (publisher, DOI, the PI's own library), e-mail (the mail store), slide decks and saved web pages whose source still resolves, deep-research `.docx` (regenerable), documents circulated under embargo.
+- **Versioned, because this repository holds the only copy:** meeting transcripts and the notes taken in the meeting, `pdftotext` and `docx2txt` extractions, and everything in `vault/wiki/`. A transcript of a discussion that cannot be repeated has no other home, which is exactly why it is committed while the PDFs beside it are not.
+
+Two reasons, and the second is the one that gets forgotten. A second copy of something unlosable is pure cost, in clone size and in review noise. And a repository with a backup remote **publishes** what it commits: an embargoed draft, a private mail address or a paywalled PDF committed here reaches every mirror and stays in the history after deletion. Confidentiality and licensing are settled **before** the first commit, not by a later `git rm`.
+
+Where the call is genuinely close it belongs to the PI, and the ingest tracker records which way it went and why. Do not re-open it per artefact.
+
 ### Never ask the PI to fetch a paper without giving her a link.
 
 When a fetch fails and the work is handed back to the PI, **every single item must carry a resolvable URL, printed as bare plain text.**.
