@@ -362,7 +362,7 @@ The cost asymmetry is the whole argument: reading the paper costs an hour; a con
 
 ## Conventions
 
-- All wiki pages are in English.
+- All wiki pages are in English. So is all other new text that goes to a shared Git host (GitLab, GitHub): READMEs, `CLAUDE.md` files, notes, logs, commit messages, issues and merge-request descriptions, so that colleagues who read only English can follow it. A project's own `CLAUDE.md` may name exceptions, such as course material written for German-speaking students. Quotes from sources in another language stay in that language, with a short English gloss where the meaning is not obvious.
 - Use `[[WikiLink]]` style for internal links (Obsidian-compatible).
 - Keep `index.md` and `log.md` always up to date.
 - When a source is in another language, note `(Source: <language>)` in the source page.
