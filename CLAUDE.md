@@ -14,27 +14,9 @@ That loop is reactive: it fires when the two of you *discuss* doing something be
 
 ## Project-scoped skills
 
-Reusable multi-step procedures live at `/workspace/.claude/skills/<name>/SKILL.md` and are invocable as `/<name>`. To list them at any time: `ls /workspace/.claude/skills/`. Current set:
+Reusable multi-step procedures live at `.claude/skills/<name>/SKILL.md` (usually the shared `sdq-skills` submodule) and are invocable as `/<name>`. Claude Code lists every skill to the agent by the `description:` frontmatter of its `SKILL.md`, so that description is what makes a skill known and what a task in the user's own words is matched against. `ls .claude/skills/` shows what exists.
 
-- `/proposal-section-review` — review one section of a CRC proposal `.tex` file (spelling, grammar, tense, voice, term glosses; commit + push discipline). Worked precedent: `proposal/c04/C04/progressreport.tex` (commits `cafd396..ac4d2ac`).
-- `/ingest-source` — ingest one or more related raw artefacts (meeting transcript + notes + email + figure) into the wiki: one or two source pages, project-page update, index + log entries. Drafted by subagent, not yet exercised — first invocation is the precedent.
-- `/critical-proposal-review` — critical content review of a sub-project proposal against DFG criteria + the wiki quality bar, filed as a section in `vault/wiki/projects/<id>.md`. Worked precedent: the four `state-and-critical-review-*` sections in `vault/wiki/projects/C04.md`.
-- `/proposal-snapshot-diff` — pull the latest Overleaf state and narrate the diff against a prior baseline (typically the commit referenced in the most recent state-and-critical-review section). Worked precedent: the "Diff against ..." subsection inside `state-and-critical-review-2026-05-23` in `vault/wiki/projects/C04.md`.
-- `/wiki-lint` — audit `vault/wiki/` for orphans, stale claims, missing concept pages, broken cross-references, empty project-page sections, frontmatter drift, MEMORY.md discipline, index desync, unverified literature, em-/en-dashes. Read-only by default; per-finding triage. Drafted by subagent, not yet exercised — first invocation is the precedent.
-- `/paper-structure` — draft or diagnose the macro-structure of a paper, thesis or abstract against the SDQ writing guide: the pyramid principle, the five-point abstract, the five-point introduction ending in an explicit contribution paragraph, related-work positioning, an assumptions-and-limitations section, the three-point conclusion, plus heading and outline rules. Sentence-level style is out of scope, since the always-on `write-scientific-prose` rule covers it. Carries the distilled guide at `paper-structure/reference/sdq-writing-guide.md` and a paste-able prompt block for non-Claude-Code tools. **Project-independent.**
-- `/paper-review` — write a structured review in the SDQ review shape (summary, outline of the argumentation, positives first, then contribution, related work, presentation, validation, minor comments kept separate), with the SDQ evidence-based protocol for AI-assisted review: novelty literature search, reference fact-checking, evidence alignment per claim, reproducibility check, questions for authors, and an explicit statement of the review's own uncertainty. Opens with a confidentiality gate, because a paper received as a program-committee or journal reviewer must not enter an AI assistant at all (`handle-ai-in-research`). **Project-independent.**
-- `/fetch-literature` — resolve a citation (DOI/title/citekey/list) via OpenAlex → DBLP, attempt publisher-direct PDF download in a fixed order (Springer, JOT, VLDB, Elsevier, IEEE, Wiley, SCITEPRESS, SEI, CEUR-WS, Eceasst; skip ACM — always Cloudflare-blocked), run a `%PDF-` + size sanity check, extract with `pdftotext`. For anything not fetched, always emit `[doi](https://doi.org/{DOI}) · [scholar](https://scholar.google.de/scholar?q=...&btnG=)` so the PI can finish from a browser. Worked precedent: the 2026-05-25 [c04-currentstate-extensions](../vault/wiki/c04-currentstate-extensions-2026-05-25.md) deliverable (5 PDFs fetched into `c04/literature/new-2026-05-25/`, 17 needing manual download with clickable links).
-- `/draft-email` — draft an e-mail for the PI to send (co-authors, collaborators, project partners). Carries the two rules that are reliably got wrong and are not guessable: the draft is written in the **agent's** voice and never in the PI's first person, because she will not send a generated mail whose "I" is not her; and the AI-collaboration disclosure line is left as a marked slot for her to write rather than drafted for her. Also owns the plain-text mechanics a mail client destroys otherwise: sentence-case headings rather than shouted ones, one unbroken line per paragraph because Thunderbird inserts its own breaks, no ASCII tables, bare URLs, and a gitignored `.txt` written outside every Overleaf submodule so `push-submodules.sh` cannot publish it. Worked precedent: the 2026-09-09 SoSyM co-author mail, whose first version had to be redone because it was drafted in the PI's voice. **Project-independent.**
-- `/extract-pdf-annotations` and `/annotate-tex-from-annotations` — a two-step pipeline for getting a reviewed PDF into the proposal source. **Extraction** handles every modality in one place: typed PDF comments (sticky notes, highlights, free-text boxes, `/IRT` reply threads), reviewer edits (strikeout, underline, caret/insert), and handwritten PDFExpert ink. It reads `/Annots` losslessly with a bundled Perl script (perl + `Compress::Zlib` only; `pdfannots` / `qpdf` / `mutool` / `python3` are absent from the container) and recovers each annotation's **anchor**, the verbatim rendered sentence it covers, by mapping `/QuadPoints` through `pdftotext -bbox-layout`; ink instead goes through two-pass DPI rasterisation. Output is a `vault/wiki/sources/` page. **Insertion** consumes one or more of those pages, plus feedback that never was a PDF (`.md`, `.docx`, email), and places `\commentAnne{}{}` / `\todoAnne{}` / `\todo{REVIEWER: ...\\ \textbf{>> reply}}` markers in the `.tex`, merging several reviewers in a single pass.
-  The seam is deliberate: an anchor can only be recovered while the PDF is at hand, whereas resolving that anchor to a line in the `.tex` needs the `.tex` (which has usually moved on since the PDF was rendered) and never the PDF. Splitting is also what lets a reviewer who sent no PDF at all take part in the same insertion pass. Worked precedents: `proposal/c05` commit `72f749b` (Düser's PDF + Sax's markdown + Kemal's partial transcription, merged in one pass), and the 2026-07-29 reuse of [[sources/2026-07-23-pretschner-pdf-annotations-c04]] by a later session without re-extracting.
-
-- `/style-review` — check a scientific text sentence by sentence against Strunk's *The Elements of Style* (1918), adapted to scientific prose, and the `write-scientific-prose` rule, which wins where the two disagree. Findings carry Strunk's rule numbers (S1 to S18, SV for misused words) and are ranked: errors, then cuts with their character savings (useful under a page limit), then style. Carries the full book at `style-review/reference/strunk-1918-elements-of-style.md`, the adapted checklist with apply / judge / skip per rule, and a perl pre-filter. Called from the presentation step of `/paper-review`, `/proposal-section-review` (step 1b), the critical-review skills and the stack-local `/spp-critical-review`. Created 2026-10-15; first run on the SPP proposal the same day. **Project-independent.**
-- `/citation-support` — check whether each cited work supports the sentence that cites it (proposal, paper, thesis), with one Markdown evidence page per document: a block per printed citing sentence generated from the LaTeX source, verbatim excerpts with line numbers, an agent reading, a note and a suggested LaTeX wording. The page holds the current state only, puts the blocks to judge first and in full, and is re-synced after every edit so only changed sentences are re-read. Bundles the sync script, an excerpt checker, the page template and a reading checklist. Worked precedent: `vault/wiki/projects/spp-agentic-se/citation-support.md` in the SPP stack (92 blocks). **Project-independent.**
-- `/skill-evolve` — the periodic maintenance pass over `/workspace/.claude/memory/` and the skill catalogue itself. Reads recent session transcripts, diagnoses the root cause of corrections the PI had to make, appends evidence to existing memories rather than rewriting them, and proposes **at most one** atomic skill change per run. The PI is the gate (there is no validation score, unlike the method it is ported from), and the outcome is written to `skill-impact.md` either way, with the full text of anything rejected so that no later run re-proposes it. The proactive counterpart to the quality-expectation loop above, which only fires when somebody notices. Created 2026-09-19, unexercised; first invocation is the precedent. **Project-independent.**
-
-`ingest-source` and `wiki-lint` were drafted in subagent runs on 2026-05-24 and 2026-05-25 and are still unexercised; their first invocation is the precedent. `paper-structure` and `paper-review` arrived with the skills-submodule bump of 2026-09-08 and are likewise unexercised here, as is `skill-evolve` (2026-09-19). The rest carry worked precedents and should be refined in place as their workflows recur.
-
-**This list is the canonical skill catalogue.** Its drift is not cosmetic: `paper-structure` and `paper-review` sat in `.claude/skills/` for a day listed only in that repo's own `README.md`, which no session reads, so no agent knew they existed. It is the one that matters, because this file is `@`-imported by the project `CLAUDE.md` and so sits in every session's context, which is what makes an agent aware a skill exists at all. `.claude/skills/README.md` carries a one-line-per-skill copy for the standalone repo; keep the two in step. Do not add a third copy under `vault/wiki/` — tooling is not research knowledge, and three copies drift. In practice the `description:` frontmatter of each `SKILL.md` does the real work: Claude Code matches against it, so a task described in the PI's own words picks up the right skill without a slash command. `ls /workspace/.claude/skills/` lists what exists; `/<name>` invokes one explicitly and accepts an argument (`/extract-pdf-annotations c05/review/foo.pdf`).
+The catalogue, with each skill's worked precedent and whether it has been exercised yet, is `.claude/skills/README.md`. Keep it in step when adding or changing a skill. Do not add a further copy under `vault/wiki/`: tooling is not research knowledge, and copies drift.
 
 ---
 
@@ -66,109 +48,7 @@ Raw sources (read-only) — listed in the project's own `CLAUDE.md`.
 
 ## Page formats
 
-### Project page (`projects/<id>.md`)
-```markdown
----
-type: project
-tags: [project]
----
-# <id> — <Short title>
-
-## Research question
-## Phase 1 results
-## Phase 2 direction
-## Open questions
-## Key people
-## Related concepts
-<!-- links to concepts/ and other project pages -->
-## References
-<!-- [authorYEARword] Full bibliographic entry. Tag ⚠️ UNVERIFIED if not checked. -->
-## Sources
-<!-- links to sources/ pages that informed this page -->
-```
-
-### Concept page (`concepts/<concept>.md`)
-```markdown
----
-type: concept
-tags: [concept]
----
-# <Concept>
-
-## Definition
-## Role in the project
-## Open problems / debates
-## Related concepts
-## References
-## Sources
-```
-
-### Paper page (`papers/<slug>.md`)
-
-For a paper the project is writing itself. Slug `<year>-<venue>-<topic>`.
-
-```markdown
----
-type: paper
-tags: [paper]
-venue: <venue + track>
-deadline: YYYY-MM-DD
-status: drafting | internal-review | submitted | under-review | revision-in-progress | camera-ready | published
----
-# <slug>: <working title>
-
-## Status
-<!-- Cold-start block: phase, what to read first in reading order, open decisions. -->
-## Claim
-<!-- One sentence: what the paper asserts that was not known before. -->
-## Contributions
-<!-- The numbered list the introduction's contribution paragraph has to match. -->
-## Structure state
-## Related work coverage
-## Evidence map
-<!-- Each claimed number, and the artefact it comes from. -->
-## Open questions
-## Review rounds
-## People
-## Related concepts
-## References
-## Sources
-<!-- What has actually been read of the manuscript, and what has not. -->
-```
-
-Two sections do work the other page types do not, and both exist because a paper
-is a *deliverable* rather than a body of knowledge:
-
-- **`## Evidence map`** ties every number the paper claims to the artefact it
-  came from (a test assertion, a results CSV, a measurement log, a table in the
-  submitted PDF). A number in a planning note or an earlier draft is not a
-  result. This is the page's defence against a fluent sentence about a
-  measurement nobody made, and it matters most where the agent is allowed to
-  generate prose.
-- **`## Sources`** records how far the manuscript has actually been read, section
-  by section if need be. A paper page is written while most of the paper is
-  still unread, so the read scope has to be explicit or the page's silence gets
-  mistaken for coverage.
-
-The cold-start content (status, what to read first, open decisions) belongs here
-and not in the project's `CLAUDE.md`, where it goes stale unread. Chronology
-belongs in `log.md`, per the durable-content rule.
-
-### Source page (`sources/<slug>.md`)
-```markdown
----
-type: source
-date: YYYY-MM-DD
-source_type: meeting | paper | note
-projects: [<id>, <id>]
----
-# <Title>
-
-## Summary
-## Key decisions / findings
-## Open questions raised
-## Wiki pages updated
-```
+Templates for project, concept, paper and source pages, with the required H2 sections and frontmatter, are in [`llm-wiki-instructions/page-formats.md`](page-formats.md). Read it before creating a page, and when checking a page's sections.
 
 ---
 
@@ -241,124 +121,19 @@ Check for:
 
 ## Operational knowledge goes in the memory store, not in the wiki
 
-`vault/wiki/` holds research knowledge. **How an agent should work on it**, and
-the corrections it has needed, go to `/workspace/.claude/memory/`: one file per
-fact, indexed by `MEMORY.md`, with `skill-impact.md` recording every skill change
-and every proposal the PI refused. That directory's `README.md` carries the
-format; `shared/reference-wikiskill.md` carries the argument and the source.
-
-The split is load-bearing, not tidy-mindedness. Tooling is not research
-knowledge, and three copies of anything drift. It also has an empirical argument
-behind it: WikiSkill (arXiv:2608.27454v1) ablated exactly this and found that an
-agent carrying the operational store while *doing the task* performed worse than
-one carrying only its skills, because it then solves from the store instead of
-from the skill and the trace stops showing what the skill fails to cover. So the
-memory store is reached through `MEMORY.md` and through skills, and is never
-loaded wholesale into a working session. `/skill-evolve` is the separate pass
-that maintains it.
-
-Four format rules come from the same source and apply to any page whose job is
-to be found and acted on.
-
-**An index line is the product; the page is only read if the line earns it.**
-WikiSkill's own maintainer prompt calls the index "the MOST IMPORTANT part of the
-wiki" and mandates `[name](path): PROBLEM + ROOT CAUSE + FIX in one or two
-sentences`. In `MEMORY.md` that form is binding, soft cap 350 characters. In
-`vault/wiki/index.md` the entries catalogue research pages rather than failure
-modes, so the weaker version applies: a line has to let a reader judge relevance
-without opening the page, which a restated title does not. The same reasoning
-already governs the `description:` frontmatter of a `SKILL.md`, which is what
-Claude Code matches against.
-
-**A page whose job is one pattern stays at 10 to 30 lines, "not essays".** The
-skills WikiSkill measured came out at 45 to 143 markdown lines and its pattern
-pages at 18 to 48. A 200-line skill carrying a 60-line worked precedent is two
-artefacts: the procedure belongs in the skill, the observed failure modes and the
-PI's rulings belong in the memory store. Split it when you next touch it.
-
-**Patch; do not rewrite; never duplicate.** A recurrence is appended as evidence
-to the existing page, so that a rule observed five times is visibly stronger than
-one observed once. Creating a second page on the same failure mode destroys that
-signal, and it is the main thing to check before creating anything.
-
-**Document what worked, not only what broke.** A store of failures alone cannot
-tell you which existing guidance is already doing its job and must be left alone.
+`vault/wiki/` holds research knowledge. How an agent should work on it, and the corrections it has needed, go to the project's memory store (`.claude/memory/`, one file per fact, indexed by `MEMORY.md`), never into a wiki page. The store is reached through `MEMORY.md` and through skills, and is not loaded wholesale into a working session. Before writing to the store or changing its format, read [`llm-wiki-instructions/memory-store.md`](memory-store.md), which has the four format rules (index line as the product, short pattern pages, patch instead of duplicate, document what worked) and the evidence behind them.
 
 ## Source discipline
 
-**Source pages are dated snapshots.** A `sources/` page records what its source said at the time of ingestion. Do not revise it later to reflect newer knowledge — the living synthesis (`projects/`, `concepts/`, `overview.md`) is where contradictions are reconciled and the current understanding lives. When a later source supersedes it, record that in the project/concept page, or add a dated annotation to the source page; do not rewrite the snapshot. Editing a source page for fidelity (typos, broken links, citation fixes, cross-links) is fine.
+The full rules, with their reasons, are in [`llm-wiki-instructions/literature-handling.md`](literature-handling.md). Read it before ingesting a source, filing or fetching a paper, or handling deep-research output. In short:
 
-**No claims about an artifact you have not opened.** Do not describe, summarize, paraphrase, "mirror", reproduce, or build on the content of any artifact — paper, slide, document, attachment, image, spreadsheet, email, link, dataset — that you have not opened/read in this session. A filename, path, reference, or someone else's description is not the content, even when a task says to "mirror" or "be consistent with" it. Instead: state plainly that you do not have it, ask the user to provide it, and offer a path that does not require it (e.g., a standalone draft from known facts, clearly marked as not derived from the unseen artifact). If you must reference it unopened, attribute the statement to the secondary source ("per the email, the slide is titled X") and mark it unverified/unseen. Bibliographic verification of a paper (DOI / venue / authors) does not count as reading it.
-
-### The source page is the read-receipt. A PDF on disk is not, and a PDF absent from disk means nothing.
-
-**A `sources/` page is the only evidence that an LLM-wiki-agent has read a work.** Use it, and nothing else, to decide whether a paper-content claim in the wiki rests on a primary read.
-
-The two failure modes, in both directions:
-
-- **Absent PDF does not mean unread.** The PI reads on several machines, from institutional access, from print, and from her own library. The `literature/` folders in this repo are a convenience cache, not a record of what has been read. **Never write or imply that the PI has not read something because the file is not in the repo.** She may know the paper far better than the wiki does.
-- **Present PDF does not mean read.** A PDF can be fetched for one sub-project, sit on disk for months, and never be opened by any agent. (Burgueño MODELS 2018 sat in `c04/literature/` from 2026-05-25 while A03 pages made unverified claims about its contents.) A `.txt` extraction next to it proves `pdftotext` ran, nothing more.
-
-So: **presence on disk is evidence about the filesystem; a `sources/` page is evidence about knowledge.** When auditing whether a claim is backed by a read, look for the source page. When there is none, the correct statement is *"no LLM-wiki-agent has read this"*, never *"this has not been read"*.
-
-A source page asserting a read must say so explicitly and say how far it went: **Verified YYYY-MM-DD** by reading the PDF end-to-end / by reading Sections X-Y / by skimming. Anything less specific is not a read-receipt.
-
-### When the PI drops a paper in an inbox, rename it, move it, and read it.
-
-The PI fetches the papers an agent cannot (paywalls, CAPTCHAs, institutional logins) and drops them in a scratch/inbox folder, under whatever name the publisher gave them (`burgueno 3542947.pdf`, `download.pdf`, `1-s2.0-S....pdf`). **Filing them is the agent's job, not hers.** Do not leave a paper sitting in the inbox, and do not read it in place: an unfiled PDF under a publisher's opaque filename is invisible to the next session.
-
-On finding a dropped paper:
-
-1. **Open it and confirm what it is** before anything else. The filename is not the identity, and the PI may have grabbed the wrong record. Check title and authors against the reference that was requested.
-2. **Rename** to the project convention: `firstauthorYEAR-short-title.pdf` (`burgueno2023-dealing-belief-uncertainty-domain-models.pdf`). Match the style already used in the destination folder rather than inventing a new one.
-3. **Move** it into the relevant sub-project's `literature/` directory, in the subfolder that groups the topic if one exists.
-4. **Extract** the text next to it: `pdftotext <file>.pdf <file>.txt`.
-5. **Read it, and file a `sources/` page.** A filed PDF with no source page is still an unread paper (see the read-receipt rule above). The point of the fetch was the read.
-6. **Leave the inbox clean** of that file, and do not touch anything else in it.
-
-Do not ask the PI where to put it or what to call it. She dropped it precisely so she would not have to think about that.
-
-### Version the derived artefact, not an original that is already persisted elsewhere.
-
-**If an artefact is durably held outside this repository, do not commit it. Commit what the repository adds to it: the extraction, the source page, the synthesis.**
-
-Apply the test once, before committing an ingested original, rather than deciding it again per file type:
-
-- **Held elsewhere, so not versioned:** paper PDFs (publisher, DOI, the PI's own library), e-mail (the mail store), slide decks and saved web pages whose source still resolves, deep-research `.docx` (regenerable), documents circulated under embargo.
-- **Versioned, because this repository holds the only copy:** meeting transcripts and the notes taken in the meeting, `pdftotext` and `docx2txt` extractions, and everything in `vault/wiki/`. A transcript of a discussion that cannot be repeated has no other home, which is exactly why it is committed while the PDFs beside it are not.
-
-Two reasons, and the second is the one that gets forgotten. A second copy of something unlosable is pure cost, in clone size and in review noise. And a repository with a backup remote **publishes** what it commits: an embargoed draft, a private mail address or a paywalled PDF committed here reaches every mirror and stays in the history after deletion. Confidentiality and licensing are settled **before** the first commit, not by a later `git rm`.
-
-Where the call is genuinely close it belongs to the PI, and the ingest tracker records which way it went and why. Do not re-open it per artefact.
-
-### Never ask the PI to fetch a paper without giving her a link.
-
-When a fetch fails and the work is handed back to the PI, **every single item must carry a resolvable URL, printed as bare plain text.**.
-
-For each unfetched item, give:
-
-- the **DOI link** (`https://doi.org/<DOI>`) whenever a DOI resolved;
-- a **Google Scholar search URL** (`https://scholar.google.de/scholar?q=<encoded>&btnG=`) always, including when a DOI exists, because Scholar surfaces preprint and repository mirrors the publisher page hides;
-- any **open-access or repository mirror** found (institutional repository, arXiv, author-hosted PDF), even one the container could not fetch: a CAPTCHA or a login wall stops an agent, not a human with a browser and institutional access;
-- one clause on **why it is blocked** (ACM Cloudflare, closed access, CAPTCHA-gated repository), so the PI knows whether to expect a paywall.
-
-**Print URLs bare, never as Markdown `[label](url)`.** The PI's VSCode chat does not render Markdown links as clickable, so a wrapped link is unreachable. (This applies to chat replies. Inside `vault/wiki/**`, which is read in Obsidian, Markdown links are fine and remain the convention.)
-
-If no DOI and no mirror could be resolved at all, say so explicitly and still emit the Scholar URL. A failed lookup is itself worth reporting: a reference that resolves in neither OpenAlex nor DBLP is often a **deep-research phantom**, and the right next step is to doubt the reference, not to hunt harder for it.
-
-### Deep research is not a read. Mark everything it returns `⚠️ UNVERIFIED`.
-
-Deep-research runs (claude.ai Research mode, Deep Research, or any external LLM search-and-synthesise tool) **do not operate under these instructions.** They have never seen the literature-handling rules, they are not obliged to distinguish a primary read from a secondary characterisation, and they routinely state a paper's contents in confident primary-voice prose whether or not the paper was opened. Their output may be right; it may be a summary of an abstract; it may be a hallucination. **From the wiki's side these are indistinguishable.**
-
-Therefore:
-
-- **Every paper-content claim originating from a deep-research run is `⚠️ UNVERIFIED` on arrival**, regardless of how specific, confident, or plausible it is. Specificity is not evidence: a run that says *"§5.3 explicitly leaves confidence per alternative as future work"* has not thereby demonstrated that it read §5.3.
-- The tag means exactly *maybe read, maybe not, nobody knows*. It is not an accusation and not a rejection. It is a statement about what the wiki can currently vouch for.
-- **The tag is cleared only by a source page recording a primary read.** Not by the claim being repeated on another page, not by it surviving several review cycles, not by a bibliographic lookup confirming the DOI. Bibliographic verification and content verification are independent axes (see `⚠️ UNVERIFIED` vs `⚠️ UNREAD` in the rules submodule).
-- **Section-, footnote-, and quote-level claims from deep research are the highest-risk category** and must never be carried into external-facing text unread. An instruction like *"quote §5.3 verbatim"* attached to a paper with no source page is a trap: it invites an author to put a fabricated quotation in front of a reviewer. Either read the paper and record the real quote, or drop the instruction.
-- When a deep-research claim is **promoted into a project or concept page**, carry the tag with it. A claim does not launder itself by being restated in the project's own voice.
-
-The cost asymmetry is the whole argument: reading the paper costs an hour; a confident-but-wrong characterisation of a reviewer's own field, in a proposal, is unrecoverable.
+- **Source pages are dated snapshots.** Do not revise a `sources/` page to reflect newer knowledge; reconcile in project and concept pages.
+- **No claims about an artifact you have not opened** in this session. A filename or someone's description is not the content.
+- **The source page is the read-receipt.** A PDF on disk does not mean it was read, and a PDF absent from disk does not mean it was not. Without a source page, the statement is "no LLM-wiki-agent has read this".
+- **A paper dropped in an inbox is filed by the agent:** confirm its identity, rename, move to `literature/`, extract, read, write the source page.
+- **Version the derived artefact,** not an original that is durably held elsewhere (paper PDFs, e-mail).
+- **Never hand a fetch back to the user without a link:** DOI link plus a Google Scholar search URL for every item.
+- **Deep research is not a read.** Every paper-content claim from it is `⚠️ UNVERIFIED` until a source page records a primary read.
 
 ---
 
@@ -424,20 +199,7 @@ All claims and references sourced from LLM deep research, meeting notes, or LLM 
 
 ### Bibliographic verification: OpenAlex first, DBLP second
 
-When adding a reference to a wiki page, a deep-research source page, or a proposal `.bib` file, **verify the bibliographic record before recording the citation**. Verification only confirms that the bibliographic details are correct (title, authors, year, venue, DOI); it does not confirm that the paper supports the claim being made. The writer still has to read the paper.
-
-Use this two-step lookup order:
-
-1. **OpenAlex first**. The API is open, returns rich JSON, and covers most journal and conference papers across all fields. Hit one of:
-   - Title-based search: `https://api.openalex.org/works?search=<keywords>&per-page=3`
-   - DOI lookup (most reliable when the DOI is known): `https://api.openalex.org/works/https://doi.org/<DOI>`
-   Parse with `jq` (the dev container has `jq`; Python is not always available). Extract `display_name`, `publication_year`, `(primary_location).source.display_name`, `doi`, `authorships[].author.display_name`, and `biblio.{volume,issue,first_page,last_page}`.
-
-2. **DBLP second**, when OpenAlex returns nothing or returns confusable results. DBLP covers computer-science venues that OpenAlex sometimes misses (workshops, technical bulletins, German `Autom.` journal, ISGT EUROPE workshops). The API is at `https://dblp.org/search/publ/api?q=<query>&format=json&h=5`. Extract from `result.hits.hit[].info`: `title`, `year`, `venue` (or `journal`), `doi`, `pages`, and `authors.author[]`.
-
-If neither service returns a confident result, the reference is typically (a) a book, (b) a technical standard (IEC, ENTSO-E), (c) a vendor specification (DNV OSP-IS), or (d) grey literature (technical reports). In that case, record the reference as **⚠️ UNVERIFIED** with a comment pointing at the publisher page where the writer should locate the bibtex record by hand.
-
-When the wiki/proposal references a reference that has *not* been verified through this path, mark it `⚠️ UNVERIFIED` (per the verification-status conventions above) until the lookup is completed.
+Verify the bibliographic record (title, authors, year, venue, DOI) before recording a citation: OpenAlex first, DBLP second, `⚠️ UNVERIFIED` when neither resolves it. This confirms the record, not that the paper supports the claim. The API calls and fields to extract are in [`llm-wiki-instructions/literature-handling.md`](literature-handling.md), section "Bibliographic verification".
 
 ---
 
@@ -455,62 +217,4 @@ Place the `.txt` file next to the source PDF with the same base name. These are 
 
 ## Git hygiene (submodules)
 
-LLM wikis built on this schema typically pull in several git submodules: this instructions submodule (`llm-wiki-instructions`), the rules submodule (`.claude/rules/mcse-rules`), a project-scoped skills submodule (`.claude/skills`), and any proposal-text submodules (Overleaf mirrors). Two recurring failure modes are worth guarding against:
-
-1. **Working with stale submodule contents** because a submodule was never initialised on the current machine (or was initialised once and has drifted), so files read inside it are old or absent.
-2. **Silently committing a rollback** of a submodule pointer in the outer repo, because the working tree had the submodule at an older SHA than the outer commit recorded. The committer notices weeks later when a colleague's machine produces a merge conflict on the gitlink.
-
-### Do not commit from Claude Cowork (sandboxed environment)
-
-Claude Cowork works on this repo from a sandbox where history-writing git is unreliable: committing and submodule operations fail there (observed: submodule `index.lock` "Operation not permitted" errors under `.git/modules/`, and partial or refused writes). From Cowork, do not run `git commit`, `git add`, `git rm`, `git mv`, or any command that writes history or the index. Create and edit files only, and leave staging, committing, and the submodule-pointer audit below to the user on a normal checkout (Claude Code CLI, VS Code, or a terminal). Read-only inspection (`git status`, `git diff`, `git diff --submodule=log`) is fine and is the right way for a Cowork session to report what it changed. This does not relax the audit rules below; it defers them to whoever performs the commit.
-
-### At session start, sync submodules
-
-The first non-trivial action in a new session, and again whenever a session resumes after a meaningful gap (overnight, after a long pause, after switching branches), is:
-
-```bash
-git submodule update --init --recursive
-```
-
-Run this from the outer repo root. It initialises any submodule that is not yet checked out and snaps each submodule's working tree to the SHA the outer repo currently records. This is read-only against the submodule's history (no commits) but does discard uncommitted work inside a submodule, so check `git status` in each submodule first if you have unfinished local work.
-
-The `git pull` you run in the outer repo does **not** update submodules by default; do not assume it does. Either configure `git config submodule.recurse true` once, or invoke the explicit command above.
-
-### One-time per clone: install the pre-commit hook
-
-`.git/hooks/` is not versioned, so the hook must be installed once per clone (fresh contributor clone, new dev container, new CI runner that commits back). Run from the outer repo root:
-
-```bash
-bash llm-wiki-instructions/install-hooks.sh
-```
-
-This creates a relative-path symlink at `.git/hooks/pre-commit` pointing into the submodule. The script is idempotent (re-running is a no-op if the symlink is already correct) and refuses to clobber an existing non-symlink hook unless `--force` (which also backs up the original).
-
-An agent finding `.git/hooks/pre-commit` absent or pointing somewhere else should install it before producing any outer-repo commits. Quick check:
-
-```bash
-ls -l .git/hooks/pre-commit 2>/dev/null | grep -F 'llm-wiki-instructions/hooks/pre-commit' \
-  || bash llm-wiki-instructions/install-hooks.sh
-```
-
-When the `llm-wiki-instructions` submodule pointer is bumped past a commit that changes anything under `hooks/`, re-run the install command in each clone (the symlink target itself is stable, but re-running surfaces drift to the next maintainer).
-
-### Before committing in the outer repo, audit submodule pointer changes
-
-Whenever `git status` in the outer repo lists a submodule under "Changes to be committed" or "Changes not staged", verify the change is intentional **before** running `git add` / `git commit`:
-
-```bash
-git diff --submodule=log <submodule-path>
-```
-
-This shows the submodule commits that the pointer change would land on. Two checks:
-
-- The new SHA should be **forward** from the old SHA (the listed commits are real new work, not an empty list or a "reverse" arrow).
-- The new SHA should match what you actually intend, i.e. the submodule's current `HEAD` (`git -C <submodule-path> rev-parse HEAD`). If the submodule is uninitialised or stuck on an old SHA, the staged pointer is whatever the working tree happens to show, which is rarely what you want.
-
-If the change is unintentional:
-
-- To snap the submodule back to the recorded SHA and unstage: `git submodule update <path>` (followed by `git reset HEAD <path>` if you had already staged the change).
-- To advance the recorded pointer to the submodule's actual `HEAD`: `git add <path>` after first making sure the submodule's `HEAD` is what you want (pull / fetch / checkout inside the submodule).
-
-The `llm-wiki-instructions/hooks/pre-commit` hook (install with `bash llm-wiki-instructions/install-hooks.sh` from the outer repo root) automates the same check at commit time and prompts before letting a suspicious change through.
+If the project uses git submodules, read [`llm-wiki-instructions/git-submodules.md`](git-submodules.md) at session start and before committing in the outer repo: it covers syncing submodules, installing the pre-commit hook, auditing submodule pointer changes, and not committing from Claude Cowork.

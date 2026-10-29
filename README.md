@@ -11,11 +11,13 @@ knowledge base, etc.):
 
 | File | Purpose |
 |------|---------|
-| `CLAUDE.md` | The schema + workflow (page formats, ingest/query/lint operations, citation conventions, quality bar). This is what an agent like Claude Code reads as project instructions. |
+| `CLAUDE.md` | The schema + workflow (ingest/query/lint operations, durable-content rule, citation conventions, quality bar). This is what an agent like Claude Code reads as project instructions, so it holds only what applies to every session and stays under Claude Code's 40k-character limit for a single instructions file. |
+| `page-formats.md`, `literature-handling.md`, `memory-store.md`, `git-submodules.md` | Read on demand, when `CLAUDE.md` points to them: page templates; source discipline and bibliographic verification; the memory-store format; git hygiene for projects with submodules. Do not `@`-import them, which would load them into every session again. |
+| `MIGRATION.md` | What moved between files, and what a consuming wiki has to check after bumping this submodule. |
 | `HOW-TO-USE.md` | Human-facing quick reference: how to talk to the agent, common commands, where to look. |
 | `conventions.md` | Project-specific conventions that evolve over time (terminology, authorship, ingest preferences). Lives **inside** the wiki vault, not here — this folder ships only an empty template. |
 | `karpathy-llm-wiki.md` | Reference: the pattern this is based on. |
-| `hooks/pre-commit` | Optional git pre-commit hook for the **parent** repo: warns when a commit changes a submodule pointer in a way that looks unintentional (silent rollback, uninitialised submodule, staged SHA != submodule's local `HEAD`). See "Git hygiene (submodules)" in `CLAUDE.md`. |
+| `hooks/pre-commit` | Optional git pre-commit hook for the **parent** repo: warns when a commit changes a submodule pointer in a way that looks unintentional (silent rollback, uninitialised submodule, staged SHA != submodule's local `HEAD`). See `git-submodules.md`. |
 | `install-hooks.sh` | Installer that symlinks each file in `hooks/` into the parent repo's `.git/hooks/`. Run once per clone, from the parent repo root: `bash llm-wiki-instructions/install-hooks.sh`. |
 
 ## How to use it in a new project
@@ -27,16 +29,15 @@ knowledge base, etc.):
    CLAUDE.md" below).
 3. Customize the **project-specific placeholders** in `CLAUDE.md`
    (`<<PROJECT_NAME>>`, the sub-project table, the in-scope concepts list,
-   the raw-source paths). The schema sections (page formats, operations,
-   citation conventions, quality bar, PDF extraction) should stay as-is.
+   the raw-source paths). The schema sections (operations, citation conventions, quality bar, PDF
+   extraction, and the on-demand files next to `CLAUDE.md`) should stay as-is.
 4. Create `vault/wiki/conventions.md` in the new project from the template
    here — it will accumulate project-specific conventions as you work.
 5. (Recommended) Install the submodule-safety pre-commit hook into
    the parent repo: `bash llm-wiki-instructions/install-hooks.sh`.
    This is per-clone (the parent repo's `.git/hooks/` is not
    versioned), so every contributor and every CI runner that
-   commits back has to run it once. See "Git hygiene (submodules)"
-   in `CLAUDE.md` for what the hook catches.
+   commits back has to run it once. See `git-submodules.md` for what the hook catches.
 
 ## Updating an existing wiki to a newer `llm-wiki-instructions`
 
@@ -50,6 +51,9 @@ git add llm-wiki-instructions
 git commit -m "Bump llm-wiki-instructions"
 bash llm-wiki-instructions/install-hooks.sh   # re-run per clone
 ```
+
+Then read `MIGRATION.md` for anything the bump moved or renamed that the
+wiki's own `CLAUDE.md` or local skills may refer to.
 
 The `install-hooks.sh` line is idempotent: if the symlink is
 already in place and pointing at the same `hooks/` directory,
