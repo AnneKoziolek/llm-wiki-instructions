@@ -140,7 +140,13 @@ The full rules, with their reasons, are in [`llm-wiki-instructions/literature-ha
 ## Conventions
 
 - All wiki pages are in English. So is all other new text that goes to a shared Git host (GitLab, GitHub): READMEs, `CLAUDE.md` files, notes, logs, commit messages, issues and merge-request descriptions, so that colleagues who read only English can follow it. A project's own `CLAUDE.md` may name exceptions, such as course material written for German-speaking students. Quotes from sources in another language stay in that language, with a short English gloss where the meaning is not obvious.
-- Use `[[WikiLink]]` style for internal links (Obsidian-compatible).
+- Internal links are standard Markdown links with a path relative to the linking page and the `.md` extension written out: `[VSUM](../concepts/VSUM.md)` on a page in `sources/`, `[open questions](A03.md#open-questions)` between two pages in `projects/`. Obsidian, GitLab, GitHub and the VS Code preview all resolve this form, and Obsidian counts it for backlinks, the graph view and rename updates. Do not write `[[WikiLink]]` links in new text, since only Obsidian renders them. Do not write paths from the wiki root (`concepts/x.md` on a page in `sources/`) either. Obsidian accepts them, and GitLab and VS Code do not.
+  - **Heading anchors** are the heading's GitLab slug: lowercase, punctuation dropped, spaces turned into hyphens, runs of hyphens squeezed to one. GitLab and VS Code jump to the heading. Obsidian matches an anchor against the heading text and otherwise opens the page at the top, so an anchor jumps everywhere only where slug and text agree (`### p5-4`). Do not give a heading an explicit `{#id}`. No renderer honours it, so it is printed with the heading and becomes part of the slug.
+  - **Spaces** in a path are written `%20`. Avoid them in new file names.
+  - **YAML frontmatter** holds no links. A Markdown link there is a plain string in every renderer, and a value starting with `[` parses as a YAML list. Name the page in prose or as a backticked path.
+  - **Obsidian settings** (Settings, Files and links): turn off *Use [[Wikilinks]]*, set *New link format* to *Relative path to file*, and keep *Automatically update internal links* on. Links that Obsidian inserts or rewrites on a rename then take this form.
+  - **A wiki that still holds `[[...]]` links** is converted in one scripted pass, committed on its own so that it can be reverted. Until then, leave existing `[[...]]` links as they are.
+  - The `[[name]]` links between the files of an agent memory store are a separate mechanism and are not affected.
 - Keep `index.md` and `log.md` always up to date.
 - When a source is in another language, note `(Source: <language>)` in the source page.
 - For PDFs in raw-source directories, note the file path as the source reference.
